@@ -10,7 +10,6 @@ import {
   FaCamera,
   FaEdit,
   FaSpinner,
-  FaLock,
 } from 'react-icons/fa';
 
 const Profile = () => {
@@ -26,8 +25,6 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    currentPassword: '',
-    newPassword: '',
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -40,8 +37,6 @@ const Profile = () => {
       setFormData({
         username: profile.username || '',
         email: profile.email || '',
-        currentPassword: '',
-        newPassword: '',
       });
     }
   }, [profile]);
@@ -52,8 +47,10 @@ const Profile = () => {
     }
 
     if (isSuccess && message) {
-      toast.success('Profile updated successfully!');
+      toast.success(message);
       setShowEditModal(false);
+      // Refresh profile data
+      dispatch(getProfile());
     }
 
     dispatch(reset());
@@ -85,7 +82,7 @@ const Profile = () => {
     setUploadingImage(true);
     try {
       await dispatch(uploadProfileImage(formData)).unwrap();
-      toast.success('Profile image updated!');
+      toast.success('Profile image updated successfully!');
       dispatch(getProfile());
     } catch (error) {
       toast.error(error || 'Failed to upload image');
@@ -104,20 +101,39 @@ const Profile = () => {
   const handleUpdateProfile = (e) => {
     e.preventDefault();
 
+    // Username validation
+    if (!formData.username) {
+      toast.error('Username is required');
+      return;
+    }
+    if (formData.username.length < 3) {
+      toast.error('Username must be at least 3 characters');
+      return;
+    }
+    if (formData.username.length > 20) {
+      toast.error('Username must not exceed 20 characters');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(formData.username)) {
+      toast.error('Username can only contain letters, numbers, underscores, and hyphens');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email) {
+      toast.error('Email is required');
+      return;
+    }
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     const updateData = {
       username: formData.username,
       email: formData.email,
     };
-
-    // Only include password fields if new password is provided
-    if (formData.newPassword) {
-      if (!formData.currentPassword) {
-        toast.error('Please enter your current password');
-        return;
-      }
-      updateData.currentPassword = formData.currentPassword;
-      updateData.newPassword = formData.newPassword;
-    }
 
     dispatch(updateProfile(updateData));
   };
@@ -240,7 +256,9 @@ const Profile = () => {
                   name="username"
                   value={formData.username}
                   onChange={onChange}
+                  placeholder="Enter username"
                   className="input-field"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -254,46 +272,10 @@ const Profile = () => {
                   name="email"
                   value={formData.email}
                   onChange={onChange}
+                  placeholder="Enter email"
                   className="input-field"
+                  disabled={isLoading}
                 />
-              </div>
-
-              {/* Change Password Section */}
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                  <FaLock className="text-blue-500" />
-                  Change Password (Optional)
-                </h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Password
-                    </label>
-                    <input
-                      type="password"
-                      name="currentPassword"
-                      value={formData.currentPassword}
-                      onChange={onChange}
-                      className="input-field"
-                      placeholder="Enter current password"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      name="newPassword"
-                      value={formData.newPassword}
-                      onChange={onChange}
-                      className="input-field"
-                      placeholder="Enter new password"
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* Buttons */}
@@ -306,7 +288,7 @@ const Profile = () => {
                   {isLoading ? (
                     <>
                       <FaSpinner className="animate-spin" />
-                      Updating...
+                      Saving...
                     </>
                   ) : (
                     'Save Changes'
@@ -316,6 +298,7 @@ const Profile = () => {
                   type="button"
                   onClick={() => setShowEditModal(false)}
                   className="btn-secondary flex-1"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
