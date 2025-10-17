@@ -1,3 +1,5 @@
+// src/redux/slices/userSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../../api/axios';
 
@@ -35,7 +37,7 @@ export const updateProfile = createAsyncThunk(
       const updatedUser = { ...storedUser, ...response.data.user };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      return response.data.user;
+      return response.data;  // ← Return full response with message!
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
@@ -94,20 +96,24 @@ const userSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      // Update Profile
+      
+      // Update Profile - FIXED!
       .addCase(updateProfile.pending, (state) => {
         state.isLoading = true;
+        state.isError = false;  // ← Clear previous errors
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.profile = action.payload;
+        state.profile = action.payload.user;  // ← Get user from response
+        state.message = action.payload.message || 'Profile updated successfully!';  // ← Set message!
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
+      
       // Upload Profile Image
       .addCase(uploadProfileImage.pending, (state) => {
         state.isLoading = true;
@@ -118,6 +124,7 @@ const userSlice = createSlice({
         if (state.profile) {
           state.profile.profileImage = action.payload;
         }
+        state.message = 'Profile image updated successfully!';
       })
       .addCase(uploadProfileImage.rejected, (state, action) => {
         state.isLoading = false;

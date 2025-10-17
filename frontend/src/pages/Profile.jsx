@@ -50,7 +50,7 @@ const Profile = () => {
       toast.success(message);
       setShowEditModal(false);
       // Refresh profile data
-      dispatch(getProfile());
+      // dispatch(getProfile());
     }
 
     dispatch(reset());
