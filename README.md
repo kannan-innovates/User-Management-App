@@ -161,6 +161,19 @@ user-management-app/
 - `PUT /api/admin/users/:id` - Update user
 - `DELETE /api/admin/users/:id` - Delete user
 
+## Frontend Routes
+
+### Public
+- `/login` - Login Page
+- `/register` - Registration Page
+
+### User (Protected)
+- `/` - Home Page
+- `/profile` - User Profile (View & Edit)
+
+### Admin (Protected)
+- `/admin/dashboard` - Admin Dashboard & User Management
+
 ## Usage
 
 ### For Users
